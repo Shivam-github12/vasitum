@@ -1,0 +1,3 @@
+com\vasitum\scheduler\service\InterviewerServiceTest.class
+com\vasitum\scheduler\controller\InterviewControllerIntegrationTest.class
+com\vasitum\scheduler\service\InterviewSlotServiceTest.class
