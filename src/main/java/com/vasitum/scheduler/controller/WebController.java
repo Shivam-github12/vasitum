@@ -40,6 +40,11 @@ public class WebController {
         return "admin";
     }
 
+    @GetMapping("/notifications")
+    public String notifications() {
+        return "notifications";
+    }
+
     @GetMapping("/booked")
     public String bookedSlots(Model model) {
         try {

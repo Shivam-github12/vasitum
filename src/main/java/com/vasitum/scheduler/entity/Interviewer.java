@@ -1,5 +1,6 @@
 package com.vasitum.scheduler.entity;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
@@ -34,9 +35,11 @@ public class Interviewer {
     private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "interviewer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<AvailabilitySlot> availabilitySlots;
 
     @OneToMany(mappedBy = "interviewer", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @JsonIgnore
     private List<InterviewSlot> interviewSlots;
 
     @PrePersist

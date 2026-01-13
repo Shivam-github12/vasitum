@@ -31,6 +31,9 @@ public class InterviewSlotService {
     @Autowired
     private InterviewerRepository interviewerRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     @Transactional(readOnly = true)
     public PaginatedResponse<InterviewSlotDto> getAvailableSlots(String cursor, int limit) {
         LocalDateTime now = LocalDateTime.now();
@@ -100,6 +103,11 @@ public class InterviewSlotService {
         slot.setBookedAt(LocalDateTime.now());
 
         slot = interviewSlotRepository.save(slot);
+        
+        // Send booking confirmation and schedule reminder
+        notificationService.sendBookingConfirmation(slot);
+        notificationService.scheduleInterviewReminder(slot);
+        
         return new InterviewSlotDto(slot);
     }
 
@@ -125,6 +133,9 @@ public class InterviewSlotService {
         if (slot.getStatus() != InterviewSlot.SlotStatus.BOOKED) {
             throw new SlotBookingException("Only booked slots can be cancelled");
         }
+
+        // Send cancellation notice before clearing candidate info
+        notificationService.sendCancellationNotice(slot);
 
         slot.setStatus(InterviewSlot.SlotStatus.AVAILABLE);
         slot.setCandidateName(null);
