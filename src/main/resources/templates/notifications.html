@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="en" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interview Scheduler - Notifications</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" th:href="@{/css/style.css}">
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <div class="container">
+            <a class="navbar-brand" href="/">Interview Scheduler</a>
+            <div class="navbar-nav ms-auto">
+                <a class="nav-link" href="/">Available Slots</a>
+                <a class="nav-link" href="/booked">Booked Slots</a>
+                <a class="nav-link" href="/admin">Admin Panel</a>
+                <a class="nav-link" href="/notifications">Notifications</a>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container mt-4">
+        <div class="row">
+            <div class="col-12">
+                <h2>Notification Center</h2>
+                
+                <div class="card mb-4">
+                    <div class="card-header">
+                        <h5>Check Notifications by Email</h5>
+                    </div>
+                    <div class="card-body">
+                        <div class="row">
+                            <div class="col-md-8">
+                                <input type="email" id="emailInput" class="form-control" placeholder="Enter email address">
+                            </div>
+                            <div class="col-md-4">
+                                <button class="btn btn-primary" onclick="loadNotifications()">Load Notifications</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header d-flex justify-content-between align-items-center">
+                        <h5>Notifications</h5>
+                        <div>
+                            <button class="btn btn-sm btn-secondary" onclick="processPendingNotifications()">Process Pending</button>
+                            <button class="btn btn-sm btn-warning" onclick="retryFailedNotifications()">Retry Failed</button>
+                        </div>
+                    </div>
+                    <div class="card-body">
+                        <div id="notificationsContainer">
+                            <p class="text-muted">Enter an email address to view notifications.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        async function loadNotifications() {
+            const email = document.getElementById('emailInput').value;
+            if (!email) {
+                alert('Please enter an email address');
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/v1/notifications/email/${encodeURIComponent(email)}`);
+                const notifications = await response.json();
+                
+                displayNotifications(notifications);
+            } catch (error) {
+                alert('Error loading notifications: ' + error.message);
+            }
+        }
+
+        function displayNotifications(notifications) {
+            const container = document.getElementById('notificationsContainer');
+            
+            if (notifications.length === 0) {
+                container.innerHTML = '<p class="text-muted">No notifications found for this email.</p>';
+                return;
+            }
+
+            let html = '<div class="table-responsive"><table class="table table-striped">';
+            html += '<thead><tr><th>Type</th><th>Subject</th><th>Status</th><th>Created</th><th>Sent</th><th>Actions</th></tr></thead><tbody>';
+            
+            notifications.forEach(notification => {
+                const statusBadge = getStatusBadge(notification.status);
+                const createdAt = new Date(notification.createdAt).toLocaleString();
+                const sentAt = notification.sentAt ? new Date(notification.sentAt).toLocaleString() : '-';
+                
+                html += `
+                    <tr>
+                        <td><span class="badge bg-info">${notification.type}</span></td>
+                        <td>${notification.subject}</td>
+                        <td>${statusBadge}</td>
+                        <td>${createdAt}</td>
+                        <td>${sentAt}</td>
+                        <td>
+                            <button class="btn btn-sm btn-outline-primary" onclick="viewContent(${notification.id})" data-subject="${notification.subject}" data-content="${notification.content}">
+                                View Content
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            html += '</tbody></table></div>';
+            container.innerHTML = html;
+        }
+
+        function getStatusBadge(status) {
+            const badges = {
+                'PENDING': '<span class="badge bg-warning">Pending</span>',
+                'SENT': '<span class="badge bg-success">Sent</span>',
+                'FAILED': '<span class="badge bg-danger">Failed</span>',
+                'CANCELLED': '<span class="badge bg-secondary">Cancelled</span>'
+            };
+            return badges[status] || '<span class="badge bg-light">Unknown</span>';
+        }
+
+        function viewContent(id) {
+            const button = event.target;
+            const subject = button.getAttribute('data-subject');
+            const content = button.getAttribute('data-content');
+            
+            const modal = document.createElement('div');
+            modal.className = 'modal fade';
+            modal.innerHTML = `
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title">Notification Content</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body">
+                            <h6>Subject:</h6>
+                            <p>${subject}</p>
+                            <h6>Content:</h6>
+                            <pre style="white-space: pre-wrap; background: #f8f9fa; padding: 15px; border-radius: 5px;">${content}</pre>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            const bootstrapModal = new bootstrap.Modal(modal);
+            bootstrapModal.show();
+            
+            modal.addEventListener('hidden.bs.modal', () => {
+                document.body.removeChild(modal);
+            });
+        }
+
+        async function processPendingNotifications() {
+            try {
+                const response = await fetch('/api/v1/notifications/process-pending', { method: 'POST' });
+                if (response.ok) {
+                    alert('Pending notifications processed successfully');
+                } else {
+                    alert('Error processing pending notifications');
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        }
+
+        async function retryFailedNotifications() {
+            try {
+                const response = await fetch('/api/v1/notifications/retry-failed', { method: 'POST' });
+                if (response.ok) {
+                    alert('Failed notifications retried successfully');
+                } else {
+                    alert('Error retrying failed notifications');
+                }
+            } catch (error) {
+                alert('Network error: ' + error.message);
+            }
+        }
+    </script>
+</body>
+</html>

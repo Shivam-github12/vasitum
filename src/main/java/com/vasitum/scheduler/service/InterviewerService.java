@@ -33,6 +33,9 @@ public class InterviewerService {
     @Autowired
     private InterviewSlotRepository interviewSlotRepository;
 
+    @Autowired
+    private NotificationService notificationService;
+
     public Interviewer createInterviewer(CreateInterviewerRequest request) {
         // Check if interviewer already exists
         if (interviewerRepository.findByEmail(request.getEmail()).isPresent()) {
@@ -108,6 +111,9 @@ public class InterviewerService {
 
         if (!slotsToCreate.isEmpty()) {
             interviewSlotRepository.saveAll(slotsToCreate);
+            
+            // Send notification about slot generation
+            notificationService.sendSlotGenerationAlert(interviewer, slotsToCreate.size());
         }
     }
 
@@ -152,5 +158,10 @@ public class InterviewerService {
         }
 
         return interviewerRepository.save(interviewer);
+    }
+
+    public void deleteInterviewer(Long id) {
+        Interviewer interviewer = getInterviewer(id);
+        interviewerRepository.delete(interviewer);
     }
 }

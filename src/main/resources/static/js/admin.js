@@ -57,6 +57,11 @@ async function generateSlots(interviewerId) {
 async function editInterviewer(interviewerId) {
     try {
         const response = await fetch(`/api/v1/interviewers/${interviewerId}`);
+        
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        
         const interviewer = await response.json();
         
         // Pre-fill the form with existing data
@@ -71,6 +76,7 @@ async function editInterviewer(interviewerId) {
         
         alert('Form loaded with interviewer data. Modify and submit to update.');
     } catch (error) {
+        console.error('Error loading interviewer data:', error);
         alert('Error loading interviewer data: ' + error.message);
     }
 }

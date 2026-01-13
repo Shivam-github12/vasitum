@@ -50,4 +50,10 @@ public class InterviewerController {
         interviewerService.generateInterviewSlots(id);
         return ResponseEntity.ok().build();
     }
+
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteInterviewer(@PathVariable Long id) {
+        interviewerService.deleteInterviewer(id);
+        return ResponseEntity.noContent().build();
+    }
 }
