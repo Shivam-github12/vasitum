@@ -49,6 +49,9 @@ public class Notification {
     @Column(name = "interviewer_id")
     private Long interviewerId;
 
+    @Column(name = "is_read", nullable = false)
+    private Boolean isRead = false;
+
     public enum NotificationType {
         BOOKING_CONFIRMATION,
         INTERVIEW_REMINDER,
@@ -121,4 +124,7 @@ public class Notification {
 
     public Long getInterviewerId() { return interviewerId; }
     public void setInterviewerId(Long interviewerId) { this.interviewerId = interviewerId; }
+
+    public Boolean getIsRead() { return isRead; }
+    public void setIsRead(Boolean isRead) { this.isRead = isRead; }
 }

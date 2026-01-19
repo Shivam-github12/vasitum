@@ -7,14 +7,12 @@ import com.vasitum.scheduler.repository.InterviewerRepository;
 import com.vasitum.scheduler.service.InterviewerService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
-import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.time.DayOfWeek;
 import java.time.LocalTime;
 
 @Component
-@Profile("never")
 public class DataInitializer implements CommandLineRunner {
 
     @Autowired
